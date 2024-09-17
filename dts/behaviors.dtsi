@@ -1,2 +1,0 @@
-#include <behaviors/control_gpio.dtsi>
-#include_next <behaviors.dtsi>
