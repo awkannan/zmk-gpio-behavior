@@ -89,6 +89,7 @@ static int control_gpio_init(const struct device *dev) {
     for(uint8_t i=1;i<NUM_CONTROLLED_GPIO;i++){
         led_off(control_gpio_dev, i);
     }
+    return 0;
 };
 
 // API Structure
