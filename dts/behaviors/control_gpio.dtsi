@@ -1,0 +1,17 @@
+/*
+ * Copyright (c) 2024 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <dt-bindings/zmk/control_gpio.h>
+
+/ {
+    behaviors {
+        /omit-if-no-ref/ gpc: gpctrl {
+            compatible = "zmk,control-gpio";
+            #binding-cells = <2>;
+            display-name = "GPIO Control";
+        };
+    };
+};

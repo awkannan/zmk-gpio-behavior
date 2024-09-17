@@ -1,0 +1,123 @@
+#define DT_DRV_COMPAT zmk_control_gpio
+
+// Dependencies
+#include <zephyr/device.h>
+#include <drivers/behavior.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/drivers/led.h>
+#include <zephyr/drivers/gpio.h>
+
+#include <zmk/behavior.h>
+
+#include <dt-bindings/zmk/control_gpio.h>
+#include <zmk/control_gpio.h>
+
+LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
+
+#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
+#define CHOSEN_DEVICE DT_CHOSEN(DT_DRV_COMPAT)
+
+static const struct device *const control_gpio_dev = DEVICE_DT_GET(CHOSEN_DEVICE);
+
+#define CHILD_COUNT(...) +1
+#define DT_NUM_CHILD(node_id) (DT_FOREACH_CHILD(node_id, CHILD_COUNT))
+#define NUM_CONTROLLED_GPIO (DT_NUM_CHILD(CHOSEN_DEVICE))
+#define DT_GPIO_PIN_GPIOS(n) GPIO_DT_SPEC_GET(n, gpios)
+
+static const struct gpio_dt_spec gpio_pins[] = {
+    DT_FOREACH_CHILD_SEP(CHOSEN_DEVICE, DT_GPIO_PIN_GPIOS , (,))
+};
+
+// struct gpio_state {
+//     bool device_is_on[NUM_CONTROLLED_GPIO] = { false };
+// };
+
+// The functions that do work
+
+int zmk_gpio_on(int idx){
+    if (idx > NUM_CONTROLLED_GPIO){
+        return -1;
+    } 
+    led_on(control_gpio_dev, idx);
+    return 0;
+}
+
+int zmk_gpio_off(int idx){
+    if (idx > NUM_CONTROLLED_GPIO){
+        return -1;
+    } 
+    led_off(control_gpio_dev, idx);
+    return 0;
+}
+
+int zmk_gpio_toggle(int idx){
+    if (idx > NUM_CONTROLLED_GPIO){
+        return -1;
+    }
+    return gpio_pin_toggle_dt(&gpio_pins[idx]);
+    // if(zmk_gpio_is_on(idx)) {
+    //     printk("GPIO reported on\n");
+    //     led_off(control_gpio_dev, idx);
+    // } else {
+    //     printk("GPIO reported off\n");
+    //     led_on(control_gpio_dev, idx);
+    // }
+    // zmk_gpio_is_on(idx) ? led_off(control_gpio_dev, idx) : led_on(control_gpio_dev, idx);
+    //return 0;
+}
+
+bool zmk_gpio_is_on(int idx){
+    printk("gpio_pins idx %d\t, port: %d, pin %d\n",idx, gpio_pins[idx].port, gpio_pins[idx].pin);
+    return gpio_pin_get_dt(&gpio_pins[idx]);
+}
+
+// Event Listener Things
+
+static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
+                                     struct zmk_behavior_binding_event event) {
+    printk("Received gpio control keypress\n");
+    switch (binding->param1) {
+    case GPIO_ON_CMD:
+        printk("On\n");
+        return zmk_gpio_on(binding->param2);
+    case GPIO_OFF_CMD:
+        printk("Off\n");
+        return zmk_gpio_off(binding->param2);
+    case GPIO_TOGG_CMD:
+        printk("Toggle\n");
+        return zmk_gpio_toggle(binding->param2);
+    default:
+        LOG_ERR("Unknown control gpio command: %d", binding->param1);
+    }
+
+    return -ENOTSUP;
+}
+
+static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
+                                      struct zmk_behavior_binding_event event) {
+    return ZMK_BEHAVIOR_OPAQUE;
+}
+
+
+
+// Driver Code
+// Initialization Function
+static int control_gpio_init(const struct device *dev) {
+    return 0;
+};
+
+// API Structure
+static const struct behavior_driver_api control_gpio_driver_api = {
+    .binding_pressed = on_keymap_binding_pressed,
+    .binding_released = on_keymap_binding_released,
+    .locality = BEHAVIOR_LOCALITY_GLOBAL
+};
+
+BEHAVIOR_DT_INST_DEFINE(0,                                                    // Instance Number (Equal to 0 for behaviors that don't require multiple instances,
+                                                                              //                  Equal to n for behaviors that do make use of multiple instances)
+                        control_gpio_init, NULL,                           // Initialization Function, Power Management Device Pointer
+                        NULL, NULL,       // Behavior Data Pointer, Behavior Configuration Pointer (Both Optional)
+                        POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,     // Initialization Level, Device Priority
+                        &control_gpio_driver_api);                         // API Structure
+
+#endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */
