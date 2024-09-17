@@ -19,19 +19,19 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 static const struct device *const control_gpio_dev = DEVICE_DT_GET(CHOSEN_DEVICE);
 
-#define CHILD_COUNT(...) +1
-#define DT_NUM_CHILD(node_id) (DT_FOREACH_CHILD(node_id, CHILD_COUNT))
-#define NUM_CONTROLLED_GPIO (DT_NUM_CHILD(CHOSEN_DEVICE))
 #define DT_GPIO_PIN_GPIOS(n) GPIO_DT_SPEC_GET(n, gpios)
 
 static const struct gpio_dt_spec gpio_devices[] = {
     DT_FOREACH_CHILD_SEP(CHOSEN_DEVICE, DT_GPIO_PIN_GPIOS , (,))
 };
 
+#define NUM_CONTROLLED_GPIO ARRAY_SIZE(gpio_devices)
+
+
 // The functions that do work
 
 int zmk_gpio_on(int idx){
-    if (idx > NUM_CONTROLLED_GPIO){
+    if (idx >= NUM_CONTROLLED_GPIO){
         return -1;
     } 
     led_on(control_gpio_dev, idx);
@@ -39,7 +39,7 @@ int zmk_gpio_on(int idx){
 }
 
 int zmk_gpio_off(int idx){
-    if (idx > NUM_CONTROLLED_GPIO){
+    if (idx >= NUM_CONTROLLED_GPIO){
         return -1;
     } 
     led_off(control_gpio_dev, idx);
@@ -47,11 +47,10 @@ int zmk_gpio_off(int idx){
 }
 
 int zmk_gpio_toggle(int idx){
-    if (idx > NUM_CONTROLLED_GPIO){
+    if (idx >= NUM_CONTROLLED_GPIO){
         return -1;
     }
     return gpio_pin_toggle_dt(&gpio_devices[idx]);
-
 }
 
 // Event Listener Things
@@ -82,7 +81,14 @@ static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
 // Driver Code
 // Initialization Function
 static int control_gpio_init(const struct device *dev) {
-    return 0;
+    //hardcode - first GPIO turns on
+    if(NUM_CONTROLLED_GPIO > 0){
+        led_on(control_gpio_dev, idx);
+    }
+    //hardcode- other GPIOs turn off
+    for(uint8_t i=1;i<NUM_CONTROLLED_GPIO;i++){
+        led_off(control_gpio_dev, idx);
+    }
 };
 
 // API Structure
