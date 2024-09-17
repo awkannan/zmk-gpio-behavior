@@ -83,11 +83,11 @@ static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
 static int control_gpio_init(const struct device *dev) {
     //hardcode - first GPIO turns on
     if(NUM_CONTROLLED_GPIO > 0){
-        led_on(control_gpio_dev, idx);
+        led_on(control_gpio_dev, 0);
     }
     //hardcode- other GPIOs turn off
     for(uint8_t i=1;i<NUM_CONTROLLED_GPIO;i++){
-        led_off(control_gpio_dev, idx);
+        led_off(control_gpio_dev, i);
     }
 };
 
