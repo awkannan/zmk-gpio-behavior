@@ -24,13 +24,9 @@ static const struct device *const control_gpio_dev = DEVICE_DT_GET(CHOSEN_DEVICE
 #define NUM_CONTROLLED_GPIO (DT_NUM_CHILD(CHOSEN_DEVICE))
 #define DT_GPIO_PIN_GPIOS(n) GPIO_DT_SPEC_GET(n, gpios)
 
-static const struct gpio_dt_spec gpio_pins[] = {
+static const struct gpio_dt_spec gpio_devices[] = {
     DT_FOREACH_CHILD_SEP(CHOSEN_DEVICE, DT_GPIO_PIN_GPIOS , (,))
 };
-
-// struct gpio_state {
-//     bool device_is_on[NUM_CONTROLLED_GPIO] = { false };
-// };
 
 // The functions that do work
 
@@ -54,37 +50,20 @@ int zmk_gpio_toggle(int idx){
     if (idx > NUM_CONTROLLED_GPIO){
         return -1;
     }
-    return gpio_pin_toggle_dt(&gpio_pins[idx]);
-    // if(zmk_gpio_is_on(idx)) {
-    //     printk("GPIO reported on\n");
-    //     led_off(control_gpio_dev, idx);
-    // } else {
-    //     printk("GPIO reported off\n");
-    //     led_on(control_gpio_dev, idx);
-    // }
-    // zmk_gpio_is_on(idx) ? led_off(control_gpio_dev, idx) : led_on(control_gpio_dev, idx);
-    //return 0;
-}
+    return gpio_pin_toggle_dt(&gpio_devices[idx]);
 
-bool zmk_gpio_is_on(int idx){
-    printk("gpio_pins idx %d\t, port: %d, pin %d\n",idx, gpio_pins[idx].port, gpio_pins[idx].pin);
-    return gpio_pin_get_dt(&gpio_pins[idx]);
 }
 
 // Event Listener Things
 
 static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
-    printk("Received gpio control keypress\n");
     switch (binding->param1) {
     case GPIO_ON_CMD:
-        printk("On\n");
         return zmk_gpio_on(binding->param2);
     case GPIO_OFF_CMD:
-        printk("Off\n");
         return zmk_gpio_off(binding->param2);
     case GPIO_TOGG_CMD:
-        printk("Toggle\n");
         return zmk_gpio_toggle(binding->param2);
     default:
         LOG_ERR("Unknown control gpio command: %d", binding->param1);
