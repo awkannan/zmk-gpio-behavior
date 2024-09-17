@@ -9,7 +9,7 @@
 / {
     behaviors {
         /omit-if-no-ref/ gpc: gpctrl {
-            compatible = "zmk,control-gpio";
+            compatible = "zmk,behavior-control-gpio";
             #binding-cells = <2>;
             display-name = "GPIO Control";
         };
