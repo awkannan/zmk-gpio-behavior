@@ -1,0 +1,16 @@
+# Copyright (c) 2024 Andrew Kannan
+# SPDX-License-Identifier: MIT
+
+compatible: "zmk,control-gpio"
+
+description: Defining GPIOs to control via keypresses
+
+child-binding:
+    description: GPIO output child node
+    properties:
+       gpios:
+          type: phandle-array
+          required: true
+       starting-state-on:
+          required: false
+          type: boolean
